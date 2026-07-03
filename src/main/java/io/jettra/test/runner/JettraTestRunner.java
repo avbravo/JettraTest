@@ -53,12 +53,14 @@ public class JettraTestRunner {
                         } catch (Throwable t) {
                             classFailures++;
                             totalFailures++;
-                            failureDetails.append(method.getName()).append(" failed: ");
-                            if (t.getCause() != null) {
-                                failureDetails.append(t.getCause().toString()).append("\n");
-                            } else {
-                                failureDetails.append(t.toString()).append("\n");
-                            }
+                            
+                            String errorMessage = (t.getCause() != null) ? t.getCause().toString() : t.toString();
+                            failureDetails.append(method.getName()).append(" failed: ").append(errorMessage).append("\n");
+                            
+                            // Print the error directly to the console to simulate standard Maven behavior
+                            System.err.println("  <<< FAILURE! -- in " + clazz.getName());
+                            System.err.println("      Method: " + method.getName() + "()");
+                            System.err.println("      Reason: " + errorMessage);
                         }
                     }
                 }
