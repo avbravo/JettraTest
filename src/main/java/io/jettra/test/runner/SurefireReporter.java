@@ -15,7 +15,7 @@ public class SurefireReporter {
         File reportFile = new File(reportsDir, "TEST-" + className + ".xml");
         try (FileWriter writer = new FileWriter(reportFile)) {
             writer.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-            writer.write(String.format("<testsuite name=\"%s\" time=\"%.3f\" tests=\"%d\" errors=\"%d\" skipped=\"%d\" failures=\"%d\">\n", 
+            writer.write(String.format(java.util.Locale.US, "<testsuite name=\"%s\" time=\"%.3f\" tests=\"%d\" errors=\"%d\" skipped=\"%d\" failures=\"%d\">\n", 
                     className, time, tests, errors, skipped, failures));
 
             // Para simplicidad, solo agregamos los fallos como detalle general de la suite o en el tag principal
