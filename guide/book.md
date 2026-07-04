@@ -11,6 +11,8 @@ A diferencia de otros frameworks, **JettraTest** es 100% nativo y cuenta con su 
 
 ---
 
+La anotacion @JWTServerThis
+
 ## 1. Configuración de JettraTest en tu Proyecto (Maven)
 
 Para que tu proyecto pueda utilizar las anotaciones de JettraTest y se ejecute automáticamente durante la fase de validación de Maven, debes actualizar tu archivo `pom.xml` con lo siguiente:
@@ -161,6 +163,59 @@ public class VistaTest {
 
 ---
 
+## 2.5 Ciclo de Vida del Servidor de Pruebas
+
+JettraTest provee una gestión nativa para levantar y detener automáticamente el servidor del proyecto antes de ejecutar las pruebas que lo necesiten.
+
+### Anotaciones de Ciclo de Vida
+- `@RequiresRunningServer`: Indica que el framework debe buscar un puerto disponible, levantar el servidor y ajustar la propiedad de puerto antes de ejecutar la prueba. (Por defecto, JettraTest asume que las pruebas requieren servidor).
+- `@NotRequiresRunningServer`: Indica que la prueba es puramente aislada y no necesita que se levante el servidor.
+- `@JettraTestLauncher`: Se coloca en una clase de tu proyecto (ej. `MyTestLauncher`) que JettraTest instanciará para levantar y detener el servidor.
+
+### Clase Lanzadora (Launcher)
+Debes implementar una clase en tu código de prueba que indique a JettraTest cómo arrancar el servidor:
+
+```java
+import io.jettra.test.annotation.JettraTestLauncher;
+
+@JettraTestLauncher
+public class MyTestLauncher {
+
+    public void startServer(int port) {
+        // Asignar el puerto dinámico y arrancar el servidor
+        System.setProperty("server.port", String.valueOf(port));
+        // Aquí llamas al arranque de tu App
+    }
+
+    public void stopServer() {
+        // Lógica para detener tu servidor
+    }
+}
+```
+
+### Inyección de Puerto Dinámico
+Si tu clase de prueba define un atributo llamado `ServerPortTest` o `serverPortTest` (ya sea `int` o `Integer`), el framework inyectará allí el puerto dinámico generado.
+
+```java
+import io.jettra.test.annotation.RequiresRunningServer;
+import io.jettra.test.annotation.JettraTest;
+
+@RequiresRunningServer
+public class AppTest {
+
+    public Integer ServerPortTest;
+
+    @JettraTest
+    public void testFlujo() {
+        // En lugar de usar puerto fijo, utiliza ServerPortTest
+        String url = "http://localhost:" + ServerPortTest + "/auth";
+        // ...
+    }
+}
+```
+
+---
+
 ## 3. Cómo Ejecutar las Pruebas
 
 Debido a que hemos enlazado nuestro runner personalizado a la fase normal de Maven, la ejecución es completamente estándar:
@@ -178,3 +233,33 @@ mvn clean test
 4. El Runner escaneará los binarios detectando tus métodos `@JettraTest`.
 5. Mostrará los resultados en consola y generará automáticamente archivos `TEST-*.xml` en `target/surefire-reports/`.
 6. Si alguna prueba falla (ej. si `JettraAssert` falla), Maven retornará un `BUILD FAILURE` y detendrá el proceso de integración o compilación.
+
+---
+
+## 4. Estilos de Consola (Soporte Semáforo)
+
+Para brindar una mejor experiencia al desarrollador, **JettraTestRunner** emite automáticamente sus reportes en consola con códigos de colores ANSI en un estilo "semáforo":
+
+- **Verde**: Indica pruebas exitosas (`Tests run: 1, Failures: 0`).
+- **Rojo**: Resalta los fallos, excepciones y el estado final con errores, ayudando a detectar rápidamente en qué método falló.
+- **Amarillo**: Indica saltos (ej. cuando se utiliza `-DskipTests`) o advertencias (como no encontrar un *Launcher* requerido).
+- **Cian**: Mensajes informativos estructurales y log del ciclo de vida del servidor (arranque y apagado).
+
+### Ejemplo de Salida Coloreada:
+
+```text
+[CYAN] -------------------------------------------------------
+[CYAN]  T E S T S  (JettraTest Framework)
+[CYAN] -------------------------------------------------------
+[CYAN] [JettraTestRunner] Server required. Starting via com.jettra.example.MyTestLauncher on port 42829
+
+Running com.jettra.example.AppTest
+[GREEN] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.158 s
+
+Results:
+
+[GREEN] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+[CYAN] [JettraTestRunner] Stopping server via com.jettra.example.MyTestLauncher
+```
+
+*(En una terminal compatible con ANSI, los textos entre corchetes aparecerán del color indicado)*

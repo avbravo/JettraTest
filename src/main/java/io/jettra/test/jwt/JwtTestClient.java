@@ -37,8 +37,22 @@ public class JwtTestClient {
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
         
         if (response.statusCode() >= 200 && response.statusCode() < 300) {
-            // Simplified: we assume the response body is the token, or the user can process it.
-            this.token = response.body();
+            String respBody = response.body();
+            // Basic extraction if the response is JSON like {"token":"Bearer eyJ..."}
+            if (respBody.trim().startsWith("{") && respBody.contains("\"token\"")) {
+                int start = respBody.indexOf("\"token\"");
+                int colon = respBody.indexOf(":", start);
+                int quoteStart = respBody.indexOf("\"", colon);
+                int quoteEnd = respBody.indexOf("\"", quoteStart + 1);
+                if (quoteStart != -1 && quoteEnd != -1) {
+                    respBody = respBody.substring(quoteStart + 1, quoteEnd);
+                }
+            }
+            // Remove "Bearer " if it's already there because getWithToken adds it
+            if (respBody.startsWith("Bearer ")) {
+                respBody = respBody.substring(7);
+            }
+            this.token = respBody;
             return this.token;
         } else {
             throw new RuntimeException("Authentication failed with status " + response.statusCode() + ": " + response.body());
