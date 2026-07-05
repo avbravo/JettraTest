@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.jettra.test.annotation.JettraTest;
+import io.jettra.report.exporter.SurefireReporter;
 
 public class JettraTestRunner {
 

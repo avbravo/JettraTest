@@ -11,9 +11,9 @@ A diferencia de otros frameworks, **JettraTest** es 100% nativo y cuenta con su 
 
 ---
 
-La anotacion @JWTServerThis
-
 ## 1. Configuración de JettraTest en tu Proyecto (Maven)
+
+Como parte de la arquitectura de la pila Jettra (incluyendo **JettraTest** y **JettraBackEnd**), se ha decidido **reemplazar completamente** el uso del `maven-surefire-plugin` para la generación de reportes y ejecución de pruebas. En su lugar, utilizamos una implementación propia impulsada por `JettraTestRunner` y el `exec-maven-plugin`.
 
 Para que tu proyecto pueda utilizar las anotaciones de JettraTest y se ejecute automáticamente durante la fase de validación de Maven, debes actualizar tu archivo `pom.xml` con lo siguiente:
 
@@ -28,21 +28,15 @@ Agrega la dependencia de la librería en la sección `<dependencies>`:
 ```
 
 ### B. Configuración de los Plugins de Ejecución
-Debido a que JettraTest usa su propio Runner, debes **deshabilitar el plugin por defecto de Maven Surefire** y configurar el `exec-maven-plugin` para que invoque a JettraTestRunner durante la fase `test`:
+Debido a que JettraTest usa su propio Runner, debes **deshabilitar el plugin por defecto de Maven Surefire** añadiendo la propiedad `surefire.skip` y configurar el `exec-maven-plugin` para que invoque a JettraTestRunner durante la fase `test`:
 
 ```xml
+<properties>
+    <skipTests>true</skipTests>
+</properties>
+
 <build>
     <plugins>
-        <!-- Deshabilitar la ejecución de JUnit estándar -->
-        <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-surefire-plugin</artifactId>
-            <version>3.2.5</version>
-            <configuration>
-                <skip>true</skip>
-            </configuration>
-        </plugin>
-
         <!-- Ejecutar el JettraTestRunner en la fase test -->
         <plugin>
             <groupId>org.codehaus.mojo</groupId>
@@ -228,11 +222,10 @@ mvn clean test
 
 **Proceso Interno:**
 1. Maven compilará los tests.
-2. `maven-surefire-plugin` omitirá la ejecución tradicional por la directiva `<skip>true</skip>`.
-3. `exec-maven-plugin` lanzará `io.jettra.test.runner.JettraTestRunner`.
-4. El Runner escaneará los binarios detectando tus métodos `@JettraTest`.
-5. Mostrará los resultados en consola y generará automáticamente archivos `TEST-*.xml` en `target/surefire-reports/`.
-6. Si alguna prueba falla (ej. si `JettraAssert` falla), Maven retornará un `BUILD FAILURE` y detendrá el proceso de integración o compilación.
+2. `exec-maven-plugin` lanzará `io.jettra.test.runner.JettraTestRunner`.
+3. El Runner escaneará los binarios detectando tus métodos `@JettraTest`.
+4. Mostrará los resultados en consola y generará automáticamente dos archivos de reporte (`TEST-*.xml` formato compatible con CI/CD, y `TEST-*.html` formato visual) en el directorio `target/jettra-test-reports/`.
+5. Si alguna prueba falla (ej. si `JettraAssert` falla), Maven retornará un `BUILD FAILURE` y detendrá el proceso de integración o compilación.
 
 ---
 
