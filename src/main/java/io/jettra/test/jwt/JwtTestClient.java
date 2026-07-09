@@ -92,4 +92,74 @@ public class JwtTestClient {
             throw new RuntimeException("GET request failed with status " + response.statusCode() + ": " + response.body());
         }
     }
+    /**
+     * Performs a POST request using the stored JWT token.
+     */
+    public String postWithToken(String url, String jsonBody) throws Exception {
+        if (token == null || token.isEmpty()) {
+            throw new IllegalStateException("JWT Token is not set. Authenticate first.");
+        }
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .header("Authorization", "Bearer " + token)
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
+                .build();
+
+        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+        if (response.statusCode() >= 200 && response.statusCode() < 300) {
+            return response.body();
+        } else {
+            throw new RuntimeException("POST request failed with status " + response.statusCode() + ": " + response.body());
+        }
+    }
+
+    /**
+     * Performs a PUT request using the stored JWT token.
+     */
+    public String putWithToken(String url, String jsonBody) throws Exception {
+        if (token == null || token.isEmpty()) {
+            throw new IllegalStateException("JWT Token is not set. Authenticate first.");
+        }
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .header("Authorization", "Bearer " + token)
+                .header("Content-Type", "application/json")
+                .PUT(HttpRequest.BodyPublishers.ofString(jsonBody))
+                .build();
+
+        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+        if (response.statusCode() >= 200 && response.statusCode() < 300) {
+            return response.body();
+        } else {
+            throw new RuntimeException("PUT request failed with status " + response.statusCode() + ": " + response.body());
+        }
+    }
+
+    /**
+     * Performs a DELETE request using the stored JWT token.
+     */
+    public String deleteWithToken(String url) throws Exception {
+        if (token == null || token.isEmpty()) {
+            throw new IllegalStateException("JWT Token is not set. Authenticate first.");
+        }
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .header("Authorization", "Bearer " + token)
+                .DELETE()
+                .build();
+
+        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+        if (response.statusCode() >= 200 && response.statusCode() < 300) {
+            return response.body();
+        } else {
+            throw new RuntimeException("DELETE request failed with status " + response.statusCode() + ": " + response.body());
+        }
+    }
 }
