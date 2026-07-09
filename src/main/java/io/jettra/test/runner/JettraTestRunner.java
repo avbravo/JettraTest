@@ -134,6 +134,7 @@ public class JettraTestRunner {
                                 }
                             }
                             
+                            injectDependencies(instance);
                             method.invoke(instance);
                         } catch (Throwable t) {
                             classFailures++;
@@ -214,5 +215,44 @@ public class JettraTestRunner {
             }
         }
         return classes;
+    }
+
+    private static void injectDependencies(Object target) {
+        if (target == null) return;
+        Class<?> clazz = target.getClass();
+        while (clazz != null && clazz != Object.class) {
+            for (java.lang.reflect.Field field : clazz.getDeclaredFields()) {
+                boolean hasInject = false;
+                for (java.lang.annotation.Annotation ann : field.getAnnotations()) {
+                    if (ann.annotationType().getSimpleName().equals("Inject")) {
+                        hasInject = true;
+                        break;
+                    }
+                }
+                if (hasInject) {
+                    try {
+                        field.setAccessible(true);
+                        if (field.get(target) == null) {
+                            Class<?> type = field.getType();
+                            Class<?> implClass = type;
+                            if (type.isInterface()) {
+                                try {
+                                    implClass = Class.forName(type.getName() + "Impl");
+                                } catch (ClassNotFoundException e) {
+                                    System.err.println("[JettraTestRunner] Implementation not found for interface " + type.getName());
+                                    continue;
+                                }
+                            }
+                            Object injectedInstance = implClass.getDeclaredConstructor().newInstance();
+                            field.set(target, injectedInstance);
+                            injectDependencies(injectedInstance);
+                        }
+                    } catch (Exception e) {
+                        System.err.println("[JettraTestRunner] Error injecting dependency into " + field.getName() + ": " + e.getMessage());
+                    }
+                }
+            }
+            clazz = clazz.getSuperclass();
+        }
     }
 }
